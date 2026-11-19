@@ -41,7 +41,7 @@ In **Noise laboratory**, select **Try 10% comparison**. This prepares |1⟩ with
 | Input fidelity for the chosen state | 0.900 | 0.900 |
 | Mean across the six test states | 0.873333 | 0.933333 |
 
-Each point in a sweep is a separate calculation. The rotation of Bob’s sphere changes the camera angle. Select **Align views** to compare both vectors from the same angle.
+Move the pointer across the noise graph to preview both mean fidelities at any resource setting. The gold dot marks the calculated experiment. Each point in a sweep is a separate calculation. The rotation of Bob’s sphere changes the camera angle. Select **Align views** to compare both vectors from the same angle.
 
 ## Repository
 

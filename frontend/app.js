@@ -26,7 +26,7 @@ function show(){
  $('metrics').innerHTML=metrics.map(([label,val])=>'<div class="metric"><span>'+label+'</span><strong>'+val+'</strong></div>').join('');
  $('avec').textContent=vector(data.input);$('bvec').textContent=vector(data.output);
  $('rotate').textContent=rotate?'Align views':'Rotate Bob';
- $('plot').innerHTML=chart(data);$('circuit').innerHTML=circuit(data.settings.feed);branches();
+ $('plot').innerHTML=chart(data);paintCursor();$('circuit').innerHTML=circuit(data.settings.feed);branches();
  $('comparison').innerHTML=table(['Pattern','Neither flips','Both flip','Input fidelity','Six-state mean'],Object.entries(data.models).map(([name,v])=>[name,((v.patterns['00']||0)*100).toFixed(1)+'%',((v.patterns['11']||0)*100).toFixed(1)+'%',v.fidelity.toFixed(6),v.mean.toFixed(6)]));
  $('numbers').innerHTML=table(['Input state','0','1','+','−','+i','−i'],[['Fidelity',...['0','1','+','-','+i','-i'].map(k=>f(active.values[k]))]])+'<p>Bob’s density matrix</p><pre>'+data.matrix.map(row=>row.join('      ')).join('\n')+'</pre><p>Measurement probabilities (00, 01, 10, 11): '+data.outcomes.map(f).join(' · ')+'</p>';
  $('sweepstatus').textContent='p = '+data.settings.p.toFixed(2)+'  ·  '+data.settings.model;
@@ -87,3 +87,51 @@ window.addEventListener('hashchange',route);document.addEventListener('visibilit
 route();calculate();requestAnimationFrame(frame);
 
 
+const noisePlot=$('plot');
+let cursorTarget=null, cursorPosition=null, cursorFrame=0;
+function paintCursor(){
+ if(cursorTarget===null||!data)return;
+ const svg=noisePlot.querySelector('svg');if(!svg)return;
+ let overlay=svg.querySelector('.cursor-guide');
+ if(!overlay){
+  overlay=document.createElementNS(svg.namespaceURI,'g');
+  overlay.setAttribute('class','cursor-guide');
+  overlay.innerHTML='<line y1="25" y2="158" stroke="#d3e7ee" stroke-dasharray="3 4"/><circle r="5" fill="#122331" stroke="#70e6cd" stroke-width="2"/><circle r="3" fill="#b9a5ff"/><g><rect width="155" height="68" rx="6" fill="#091925" stroke="#466173"/><text x="9" y="17" fill="#eaf5f7"></text><text x="9" y="38" fill="#70e6cd"></text><text x="9" y="58" fill="#b9a5ff"></text></g>';
+  svg.append(overlay);
+ }
+ const p=cursorPosition,x=58+665*p;
+ const values=['Independent','Linked'].map(name=>(1-p)*data.models[name].start+p*.5);
+ const [guide,first,second,box]=overlay.children;
+ guide.setAttribute('x1',x);guide.setAttribute('x2',x);
+ [first,second].forEach((point,i)=>{point.setAttribute('cx',x);point.setAttribute('cy',158-(values[i]-.3)*190)});
+ box.setAttribute('transform','translate('+(x>555?x-166:x+11)+' 64)');
+ const labels=box.querySelectorAll('text');
+ labels[0].textContent='Preview p = '+p.toFixed(3);
+ labels[1].textContent='Independent   '+values[0].toFixed(4);
+ labels[2].textContent='Linked             '+values[1].toFixed(4);
+}
+function glide(){
+ cursorFrame=0;
+ if(cursorTarget===null)return;
+ const gap=cursorTarget-cursorPosition;
+ cursorPosition=Math.abs(gap)<.0002||matchMedia('(prefers-reduced-motion: reduce)').matches?cursorTarget:cursorPosition+gap*.42;
+ paintCursor();
+ if(cursorPosition!==cursorTarget)cursorFrame=requestAnimationFrame(glide);
+}
+function trackCursor(event){
+ const svg=noisePlot.querySelector('svg');if(!svg)return;
+ const transform=svg.getScreenCTM();if(!transform)return;
+ const point=new DOMPoint(event.clientX,event.clientY).matrixTransform(transform.inverse());
+ cursorTarget=Math.max(0,Math.min(1,(point.x-58)/665));
+ if(cursorPosition===null)cursorPosition=cursorTarget;
+ if(!cursorFrame)cursorFrame=requestAnimationFrame(glide);
+}
+noisePlot.addEventListener('pointermove',trackCursor);
+noisePlot.addEventListener('pointerdown',trackCursor);
+function hideCursor(){
+ cancelAnimationFrame(cursorFrame);cursorFrame=0;cursorTarget=cursorPosition=null;
+ noisePlot.querySelector('.cursor-guide')?.remove();
+}
+noisePlot.addEventListener('pointerleave',hideCursor);
+noisePlot.addEventListener('pointercancel',hideCursor);
+window.addEventListener('hashchange',hideCursor);
