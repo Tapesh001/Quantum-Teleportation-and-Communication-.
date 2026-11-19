@@ -1,0 +1,60 @@
+# Teleportation Lab
+
+A local quantum communication workspace for investigating **how accurately Bob recovers Alice’s state when the shared Bell pair and the two classical correction bits are noisy**. The application calculates all four measurement branches of the three-qubit teleportation protocol.
+
+**[Download the project software](https://github.com/Tapesh001/Quantum-Teleportation-and-Communication-./raw/refs/heads/main/downloads/Quantum_Teleportation_Animated.zip)** · [Science and assumptions](docs/science.md) · [Code by part](docs/code-map.md)
+
+![Teleportation Lab overview with live fidelity results, input and output Bloch spheres and a three-qubit circuit](docs/overview.png)
+
+## Open the software
+
+1. Install Python 3.8 or newer and have a modern desktop browser available.
+2. Download the ZIP above and **extract all files**.
+3. On Windows, double-click **Launch_Model.cmd**. Your default browser opens the lab. Keep the launcher window open during your session and press Ctrl+C there to stop the local server.
+
+From a checkout or an extracted ZIP you can also run:
+
+```bash
+python run.py
+```
+
+The terminal prints the local address if the browser does not open automatically. The application uses standard-library Python, local HTML, CSS and JavaScript. No package installation, cloud account or internet connection is needed for simulation.
+
+## Workspace
+
+| Page | What you can investigate |
+| --- | --- |
+| **Overview** | See input fidelity, six-state mean, resource mixing and the teleportation circuit. Alice’s reference and Bob’s output have their own labeled Bloch spheres. |
+| **State simulator** | Set θ, φ, resource mixing p, per-bit error e and Bob’s corrections. Inspect the density matrix and the possible received messages given Alice’s measured bits. |
+| **Noise laboratory** | Animate a 101-point resource-noise sweep, compare independent and perfectly linked errors, and export both models to CSV. |
+| **History** | Browse saved settings and results, newest first. Browser and desktop interfaces use the same local SQLite journal. |
+| **Theory** | Read the protocol, model assumptions, classical benchmark and links to the research papers. |
+
+## A result to reproduce
+
+In **Noise laboratory**, select **Try 10% comparison**. This prepares |1⟩ with an ideal Bell pair and a 10% error rate per classical bit. Press **Start sweep** to increase p while the other settings stay fixed.
+
+| At p = 0 and e = 0.10 | Independent flips | Linked flips |
+| --- | ---: | ---: |
+| Neither bit flips | 81% | 90% |
+| Both bits flip | 1% | 10% |
+| Input fidelity for the chosen state | 0.900 | 0.900 |
+| Mean across the six test states | 0.873333 | 0.933333 |
+
+Each point in a sweep is a separate calculation. The rotation of Bob’s sphere changes the camera angle. Select **Align views** to compare both vectors from the same angle.
+
+## Repository
+
+| Directory | Contents |
+| --- | --- |
+| [frontend](frontend/) | Responsive browser workspace, circuit, Bloch spheres and charts |
+| [backend](backend/) | Numerical engine, local HTTP service, history and CSV calculations |
+| [desktop](desktop/) | Optional Tkinter lab and history viewer, using the same backend engine |
+| [tests](tests/) | Reproducible numerical checks |
+| [docs](docs/) | Model assumptions, references, part-by-part code guide and interface screenshot |
+| [scripts](scripts/) | Build the downloadable offline package |
+| [downloads](downloads/) | Ready-to-extract project ZIP |
+
+Run the checks with `python -m unittest discover -s tests -v`. To launch the optional Tk interface, use `python desktop/teleportation_model.py`. Desktop inputs, results and corrections follow the same model as the browser interface.
+
+The layout takes inspiration from the [reference workspace](https://github.com/SatyaSailesh/quantum-teleportation). The noise models and calculations are those of this quantum communication project.
