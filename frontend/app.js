@@ -135,3 +135,11 @@ function hideCursor(){
 noisePlot.addEventListener('pointerleave',hideCursor);
 noisePlot.addEventListener('pointercancel',hideCursor);
 window.addEventListener('hashchange',hideCursor);
+$('theory-chapter').addEventListener('change',event=>{
+ const chapter=document.getElementById(event.target.value);
+ if(!chapter)return;
+ chapter.open=true;
+ chapter.querySelector('summary').focus({preventScroll:true});
+ chapter.scrollIntoView({block:'start'});
+ event.target.selectedIndex=0;
+});
