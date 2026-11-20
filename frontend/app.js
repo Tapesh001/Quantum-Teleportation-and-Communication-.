@@ -55,7 +55,7 @@ function route(){
  document.querySelectorAll('nav a').forEach(a=>{a.classList.toggle('active',a.hash==='#'+page);a.setAttribute('aria-current',a.hash==='#'+page?'page':'false')});
  document.querySelectorAll('.content>section').forEach(s=>s.hidden=true);
  for(const id of list.split(' ')){const el=$(id);el.parentNode.append(el);el.hidden=false}
- $('guide-pin').setAttribute('aria-current',guide?'location':'false');
+ if(guide)$('first-visit').hidden=true;
  if(page==='history'){historyPage=0;loadHistory()}
  if(guide)openGuide();else window.scrollTo(0,0)
 }
@@ -63,6 +63,12 @@ function openGuide(){
  const guide=$('software-guide');guide.open=true;
  guide.querySelector('summary').focus({preventScroll:true});
  guide.scrollIntoView({block:'start'});
+}
+// The launcher uses a different port each run. A host cookie remembers visits across ports.
+const visitorCookie='teleportation_lab_guide_seen=1';
+if(!document.cookie.split(';').some(item=>item.trim()===visitorCookie)){
+ document.cookie=visitorCookie+'; Max-Age=34560000; Path=/; SameSite=Strict';
+ $('first-visit').hidden=false;
 }
 $('guide-pin').addEventListener('click',()=>{if(location.hash==='#software-guide')openGuide()});
 function frame(t){

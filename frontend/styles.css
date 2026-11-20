@@ -4,4 +4,4 @@
 #plot svg{cursor:crosshair}.cursor-guide{pointer-events:none;font:12px system-ui;font-variant-numeric:tabular-nums}
 .theory{max-width:94ch;margin-inline:auto}.theory p,.theory li{line-height:1.7}.theory summary{font-size:1.12rem;color:var(--mint);padding:9px 0}.theory details{padding-block:9px}.theory li+li{margin-top:8px}.theory ol{padding-left:1.4em}
 .theory h3{font-size:1.04rem;color:#f0f7f8;margin:1.4em 0 .4em}.theory-jump select{max-width:100%}.theory details{scroll-margin-top:12px}
-.guide-pin{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid #416c68;border-radius:8px;color:var(--mint);background:#153438;text-decoration:none;font-weight:650}.guide-pin svg{width:18px;height:18px;fill:currentColor}.guide-pin:hover,.guide-pin[aria-current="location"]{border-color:var(--mint)}@media(max-width:650px){.guide-pin{position:absolute;right:12px;top:10px;padding:5px 10px;font-size:13px}}
+#first-visit{padding:16px clamp(16px,3vw,48px);border-top:1px solid var(--line);color:var(--muted)}#first-visit a{color:var(--mint);font-weight:650;margin-left:6px}
