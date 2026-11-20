@@ -6,6 +6,8 @@
 
 **[Download Teleportation Lab for Windows ↓](https://github.com/Tapesh001/Quantum-Teleportation-and-Communication-./raw/refs/heads/main/downloads/Quantum_Teleportation_Animated.zip)** · [First experiment](#a-result-to-reproduce) · [Research paper](#from-the-paper-to-the-project) · [Code by project part](docs/code-map.md)
 
+For a guided first run, open **Theory → Software Guide** in the app. It covers launch, controls, sample messages, both fidelity scores, the noise graph, CSV files and history.
+
 ## Open the software
 
 1. Install Python 3.8 or newer and have a modern desktop browser available.
