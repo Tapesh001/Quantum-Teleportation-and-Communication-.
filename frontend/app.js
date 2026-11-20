@@ -50,13 +50,21 @@ async function loadHistory(){try{
  $('count').textContent=result.count+' entries · page '+(historyPage+1);$('newer').disabled=!historyPage;$('older').disabled=(historyPage+1)*30>=result.count;
  }catch(e){error(e.message)}}
 function route(){
- pause();const requested=location.hash.slice(1);page=Object.hasOwn(pages,requested)?requested:'overview';
+ pause();const requested=location.hash.slice(1),guide=requested==='software-guide';page=guide?'theory':Object.hasOwn(pages,requested)?requested:'overview';
  const [label,title,sub,list]=pages[page];$('crumb').textContent=label;$('heading').textContent=title;$('subtitle').textContent=sub;
  document.querySelectorAll('nav a').forEach(a=>{a.classList.toggle('active',a.hash==='#'+page);a.setAttribute('aria-current',a.hash==='#'+page?'page':'false')});
  document.querySelectorAll('.content>section').forEach(s=>s.hidden=true);
  for(const id of list.split(' ')){const el=$(id);el.parentNode.append(el);el.hidden=false}
- if(page==='history'){historyPage=0;loadHistory()}window.scrollTo(0,0)
+ $('guide-pin').setAttribute('aria-current',guide?'location':'false');
+ if(page==='history'){historyPage=0;loadHistory()}
+ if(guide)openGuide();else window.scrollTo(0,0)
 }
+function openGuide(){
+ const guide=$('software-guide');guide.open=true;
+ guide.querySelector('summary').focus({preventScroll:true});
+ guide.scrollIntoView({block:'start'});
+}
+$('guide-pin').addEventListener('click',()=>{if(location.hash==='#software-guide')openGuide()});
 function frame(t){
  if(data&&!document.hidden&&!$('visual').hidden&&t-previous>=40){
   if(rotate)angle+=(previous?Math.min(100,t-previous):0)*Math.PI/11000;previous=t;
