@@ -33,13 +33,14 @@ export function chart(data){
  out+='<circle cx="'+X(data.settings.p)+'" cy="'+Y(m)+'" r="6" fill="'+gold+'"/>';
  return svg(760,209,out,'Six-state mean fidelity against resource mixing');
 }
-export function circuit(feed){
+export function circuit(feed,received,step){
  let s='';const ys=[37,84,131];
  for(let i=0;i<3;i++)s+=txt(45,ys[i]+4,['q0 · input','q1 · Alice','q2 · Bob'][i])+line(85,ys[i],730,ys[i],'#426373');
  function gate(x,y,symbol,on=true){return '<rect x="'+(x-15)+'" y="'+(y-15)+'" width="30" height="30" rx="5" fill="'+(on?'#1d4546':'#283340')+'" stroke="'+(on?mint:muted)+'"/>'+txt(x,y+5,symbol,on?mint:muted)}
  function cx(x,y1,y2){return line(x,y1,x,y2,mint,2)+'<circle cx="'+x+'" cy="'+y1+'" r="5" fill="'+mint+'"/><circle cx="'+x+'" cy="'+y2+'" r="10" fill="#123039" stroke="'+mint+'"/>'+line(x-8,y2,x+8,y2,mint)+line(x,y2-8,x,y2+8,mint)}
- s+=gate(108,37,'ψ')+gate(173,84,'H')+cx(244,84,131)+cx(336,37,84)+gate(401,37,'H');
- s+=line(467,37,467,16,gold,1,'3 3')+line(467,16,672,16,gold,1,'3 3')+line(672,16,672,115,gold,1,'3 3');
- s+=line(503,84,591,84,gold,1,'3 3')+line(591,84,591,115,gold,1,'3 3')+gate(467,37,'M')+gate(503,84,'M')+gate(591,131,'X',feed)+gate(672,131,'Z',feed);
+ function stage(i,body){return '<g class="circuit-stage '+(i===step?'lit':i<step?'done':'waiting')+'">'+body+'</g>'}
+ s+=stage(0,gate(108,37,'ψ'))+stage(1,gate(173,84,'H')+cx(244,84,131))+stage(2,cx(336,37,84))+stage(3,gate(401,37,'H'));
+ s+=stage(5,line(467,37,467,16,gold,1,'3 3')+line(467,16,672,16,gold,1,'3 3')+line(672,16,672,115,gold,1,'3 3'));
+ s+=stage(5,line(503,84,591,84,gold,1,'3 3')+line(591,84,591,115,gold,1,'3 3'))+stage(4,gate(467,37,'M')+gate(503,84,'M'))+stage(6,gate(591,131,'X',feed&&received[1]==='1'))+stage(7,gate(672,131,'Z',feed&&received[0]==='1'));
  return svg(760,161,s,'Teleportation circuit from input preparation to conditional correction');
 }

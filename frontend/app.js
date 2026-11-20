@@ -17,6 +17,7 @@ async function api(url,options){const r=await fetch(url,options);if(!r.ok){let v
 const post=d=>({method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
 function settings(){return Object.fromEntries([...['theta','phi','p','e'].map(k=>[k,Number(form.elements[k].value)]),['model',form.elements.model.value],['feed',form.elements.feed.checked]])}
 function table(head,rows){return '<table><thead><tr>'+head.map(v=>'<th>'+v+'</th>').join('')+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(v=>'<td>'+v+'</td>').join('')+'</tr>').join('')+'</tbody></table>'}
+let circuitTimer, sampled=null;
 function branches(){if(!data)return;$('receipt').textContent='';const model=data.models[data.settings.model],sent=parseInt($('measured').value,2);
  const rows=Object.entries(model.patterns).map(([mask,prob])=>{const n=sent^parseInt(mask,2);return [mask,n.toString(2).padStart(2,'0'),(100*prob).toFixed(1)+'%',data.settings.feed?['Identity','X','Z','X then Z'][n]:'Disabled']});
  $('messages').innerHTML=table(['Bits flipped¹','Bob receives','Probability','Bob applies'],rows)+'<p class="hint">¹ A 1 marks a flipped bit. Probabilities are conditional on the chosen Alice outcome.</p>'}
@@ -26,14 +27,14 @@ function show(){
  $('metrics').innerHTML=metrics.map(([label,val])=>'<div class="metric"><span>'+label+'</span><strong>'+val+'</strong></div>').join('');
  $('avec').textContent=vector(data.input);$('bvec').textContent=vector(data.output);
  $('rotate').textContent=rotate?'Align views':'Rotate Bob';
- $('plot').innerHTML=chart(data);paintCursor();$('circuit').innerHTML=circuit(data.settings.feed);branches();
+ $('plot').innerHTML=chart(data);paintCursor();renderCircuit();branches();
  $('comparison').innerHTML=table(['Pattern','Neither flips','Both flip','Input fidelity','Six-state mean'],Object.entries(data.models).map(([name,v])=>[name,((v.patterns['00']||0)*100).toFixed(1)+'%',((v.patterns['11']||0)*100).toFixed(1)+'%',v.fidelity.toFixed(6),v.mean.toFixed(6)]));
  $('numbers').innerHTML=table(['Input state','0','1','+','−','+i','−i'],[['Fidelity',...['0','1','+','-','+i','-i'].map(k=>f(active.values[k]))]])+'<p>Bob’s density matrix</p><pre>'+data.matrix.map(row=>row.join('      ')).join('\n')+'</pre><p>Measurement probabilities (00, 01, 10, 11): '+data.outcomes.map(f).join(' · ')+'</p>';
  $('sweepstatus').textContent='p = '+data.settings.p.toFixed(2)+'  ·  '+data.settings.model;
 }
 function pause(reset=false){running=false;sequence++;if(reset)cursor=null;$('sweep').textContent=cursor===null?'Start sweep':cursor>=100?'Replay sweep':'Resume sweep'}
 async function calculate(isSweep=false){if(!form.reportValidity())return false;const id=++requestId;
- try{const result=await(await api('/api/run',post({...settings(),sweep:isSweep}))).json();if(id!==requestId)return false;data=result;error();show();return true}catch(e){error(e.message);return false}}
+ try{const result=await(await api('/api/run',post({...settings(),sweep:isSweep}))).json();if(id!==requestId)return false;data=result;sampled=null;error();show();return true}catch(e){error(e.message);return false}}
 async function sweep(){
  if(running){pause();return}if(!form.reportValidity())return;
  running=true;const token=++sequence;$('sweep').textContent='Pause sweep';
@@ -57,7 +58,7 @@ function route(){
  for(const id of list.split(' ')){const el=$(id);el.parentNode.append(el);el.hidden=false}
  if(guide)$('first-visit').hidden=true;
  if(page==='history'){historyPage=0;loadHistory()}
- if(guide)openGuide();else window.scrollTo(0,0)
+ if(guide)openGuide();else window.scrollTo(0,0);renderCircuit()
 }
 function openGuide(){
  const guide=$('software-guide');guide.open=true;
@@ -80,11 +81,14 @@ function frame(t){
 form.onsubmit=e=>{e.preventDefault();pause(true);calculate()};
 form.oninput=()=>pause(true);
 $('rotate').onclick=()=>{rotate=!rotate;angle=0;show()};
-$('measured').onchange=branches;
+$('measured').onchange=()=>{sampled=null;branches();renderCircuit()};
 $('transmit').onclick=async()=>{
  if(!data)return;
  try{
- const result=await(await api('/api/message',post({...data.settings,sent:$('measured').value}))).json();
+ const snapshot=data,sent=$('measured').value;
+ const result=await(await api('/api/message',post({...snapshot.settings,sent}))).json();
+ if(snapshot!==data||sent!==$('measured').value)return;
+ sampled=result.received;renderCircuit();
  $('receipt').textContent='Sent '+result.sent+'  →  Received '+result.received+'  ·  Correction: '+result.correction;
  $('receipt').animate([{opacity:.2,transform:'translateX(-8px)'},{opacity:1,transform:'translateX(0)'}],{duration:280});
  }catch(e){error(e.message)}
@@ -98,6 +102,31 @@ $('sweep').onclick=sweep;
 $('csv').onclick=async()=>{pause();if(!form.reportValidity())return;try{const blob=await(await api('/api/csv',post(settings()))).blob(),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='teleportation-results.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)}catch(e){error(e.message)}};
 $('refresh').onclick=()=>{historyPage=0;loadHistory()};$('older').onclick=()=>{historyPage++;loadHistory()};$('newer').onclick=()=>{historyPage--;loadHistory()};
 window.addEventListener('hashchange',route);document.addEventListener('visibilitychange',()=>{if(document.hidden&&running)pause()});
+function renderCircuit(){
+ clearTimeout(circuitTimer);
+ if(!data||$('protocol').hidden)return;
+ const {theta,phi,p,e,model,feed}=data.settings,sent=$('measured').value;
+ const [mask]=Object.entries(data.models[model].patterns).sort((a,b)=>b[1]-a[1])[0];
+ const received=sampled??(parseInt(sent,2)^parseInt(mask,2)).toString(2).padStart(2,'0');
+ const action=(gate,bit)=>!feed?gate+' skipped · corrections disabled':gate+(bit==='1'?' applied':' skipped')+' · control bit '+bit;
+ const stages=[
+  'Prepare Alice’s input with θ = '+theta+'° and φ = '+phi+'°.',
+  'H and CNOT create the Bell pair; the resource model mixes in '+(100*p).toFixed(1)+'% white noise.',
+  'Alice applies CNOT from input q0 to her resource qubit q1.',
+  'Alice applies H to q0 before reading the two qubits.',
+  'Inspect Alice’s measurement '+sent+' (probability '+(100*data.outcomes[parseInt(sent,2)]).toFixed(1)+'%).',
+  'Alice sends '+sent+' through the '+model.toLowerCase()+' error channel (e = '+e+'). Bob receives '+received+'.',
+  action('X',received[1]),action('Z',received[0])
+ ];
+ $('branch-caption').textContent=(sampled===null?'Most probable message for this outcome':'Sampled transmission')+' · '+sent+' → '+received+' · Fidelity above averages all branches.';
+ function paint(i){
+  $('circuit').innerHTML=circuit(feed,received,i);
+  $('gate-caption').textContent=(i+1)+' / 8   '+stages[i];
+  if(i<7)circuitTimer=setTimeout(()=>paint(i+1),780);
+ }
+ paint(matchMedia('(prefers-reduced-motion: reduce)').matches?7:0);
+}
+$('replay-circuit').onclick=renderCircuit;
 route();calculate();requestAnimationFrame(frame);
 
 
